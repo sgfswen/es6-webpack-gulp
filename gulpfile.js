@@ -13,7 +13,24 @@ const gulp = require('gulp'),						//基础库
 	rev = require('gulp-rev'),					//加hash
 	revReplace = require("gulp-rev-replace"),	//修改加hash后的路径
 	rename = require("gulp-rename"),			//重命名
-	imagemin = require('gulp-imagemin');		//img压缩
+	imagemin = require('gulp-imagemin'),		//img压缩
+	sftp = require('gulp-sftp');
+
+//gulp 上传
+gulp.task('upload', function () {
+    var workDirectory = 'xxx';
+    return gulp.src('ly.txt')
+        .pipe(sftp({
+            host: '123.56.72.216',
+            user: 'liuyang',
+            pass: 'ly123456!@#',
+            // port: '22'
+            // key: config.sftp.key,
+            // pass: config.sftp.pass,
+            // remotePath: config.sftp.remotePath+objectDirectoryName
+        }));
+});
+
 
 //源文件位置
 const src = {
@@ -21,7 +38,7 @@ const src = {
 	es6: ['src/public/js/views/*.es'],
 	css: 'src/public/sass/*.scss',
 	img: 'src/public/images/**',
-	html: 'src/page/*.html'
+	html: 'src/*.html'
 };
 
 //临时目录
@@ -34,13 +51,13 @@ const temp = {
 	html: 'temp'
 }
 
-//目标文件位置
-const dest = {
-	dir: 'dest',
-	js: 'dest/public/js',
-	css: 'dest/public/css',
-	img: 'dest/public/images',
-	html: 'dest'
+//发布文件位置
+const dist = {
+	dir: 'dist',
+	js: 'dist/public/js',
+	css: 'dist/public/css',
+	img: 'dist/public/images',
+	html: 'dist'
 };
 
 //帮助 
@@ -67,7 +84,7 @@ gulp.task('default', () => {
 
 //清除
 gulp.task('clean', () => {
-    return del(['dest']);
+    return del(['dist']);
 });
 
 //sass编译压缩  outputStyle解析后的css格式 有四种取值分别为：nested，expanded，compact，compressed。
@@ -120,7 +137,7 @@ gulp.task('compress', ['babel', 'move-js'], (cb) => {
 gulp.task('min-html', ['clean'], () => {
   return gulp.src(src.html)
     .pipe(htmlmin({collapseWhitespace: true}))
-    .pipe(gulp.dest(dest.html));
+    .pipe(gulp.dest(dist.html));
 });
 
 //html只移动
@@ -140,17 +157,17 @@ gulp.task('min-image', () =>
 gulp.task("revision", function(){
   return gulp.src(temp.dir + "/**")
     .pipe(rev())
-    .pipe(gulp.dest(dest.dir))
+    .pipe(gulp.dest(dist.dir))
     .pipe(rev.manifest())
-    .pipe(gulp.dest(dest.dir))
+    .pipe(gulp.dest(dist.dir))
 });
 
 //加hash后修改路径
 gulp.task("revreplace", ["revision"], function(){
-	var manifest = gulp.src(dest.dir + "/rev-manifest.json");
-	return gulp.src(dest.dir + "/**")
+	var manifest = gulp.src(dist.dir + "/rev-manifest.json");
+	return gulp.src(dist.dir + "/**")
 	   	.pipe(revReplace({manifest: manifest}))
-	   	.pipe(gulp.dest(dest.dir));
+	   	.pipe(gulp.dest(dist.dir));
 });
 
 // // 启动服务
@@ -197,7 +214,7 @@ gulp.task('develop', ['build-develop'], () => {
 });
 //生产环境
 gulp.task('production', ['build-production'], () => {
-	browserSyncFn(dest.dir);
+	browserSyncFn(dist.dir);
 });
 
 //开发环境监听
